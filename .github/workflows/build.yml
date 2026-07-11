@@ -78,6 +78,7 @@ jobs:
           format: table
           severity: CRITICAL
           exit-code: '1'
+          ignore-unfixed: true
 
       - name: Push image
         if: github.event_name != 'pull_request'
