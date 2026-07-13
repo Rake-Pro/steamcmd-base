@@ -36,8 +36,10 @@ LogAction() {
 Log() {
   local message="$1"
   local color="$2"
-  local prefix="$3"
-  local suffix="$4"
+  # prefix/suffix are optional (only LogAction passes them); default them so
+  # callers running under `set -u` don't die here.
+  local prefix="${3:-}"
+  local suffix="${4:-}"
   printf "$color%s$RESET$LINE" "$prefix$message$suffix"
 }
 
@@ -45,7 +47,7 @@ Log() {
 # unset or empty.
 require_env() {
   local var_name="$1"
-  if [ -z "${!var_name}" ]; then
+  if [ -z "${!var_name:-}" ]; then
     LogError "Required environment variable $var_name is not set"
     exit 1
   fi
@@ -55,8 +57,8 @@ require_env() {
 # steamcmd into $INSTALL_DIR. Run as the steam user. Pass "validate" as the
 # second argument to force file validation.
 steamcmd_update() {
-  local appid="$1"
-  local validate="$2"
+  local appid="${1:-}"
+  local validate="${2:-}"
 
   if [ -z "$appid" ]; then
     LogError "steamcmd_update: appid argument is required"
