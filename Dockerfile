@@ -7,6 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # runtime libs.
 RUN dpkg --add-architecture i386 \
  && apt-get update \
+ && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends \
       lib32gcc-s1 \
       lib32stdc++6 \
