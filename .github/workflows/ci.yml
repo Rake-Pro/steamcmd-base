@@ -1,12 +1,12 @@
 name: CI
 
-# No paths filters: the "build" check is required on prod promotion PRs, so it
-# must exist on every main SHA - a filtered-out push would block promotion.
+# No paths filters: the "build" check is required on dev -> main promotion PRs, so it
+# must exist on every dev SHA - a filtered-out push would block promotion.
 on:
   push:
-    branches: [main]
+    branches: [dev]
   pull_request:
-    branches: [main]
+    branches: [dev]
   workflow_dispatch: {}
 
 permissions:
@@ -18,6 +18,9 @@ concurrency:
 
 jobs:
   build:
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,7 +33,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       # Validation only: the image is built but never pushed. Runs on every push
-      # to main so the check lands on the SHA the main -> prod PR points at.
+      # to dev so the check lands on the SHA the dev -> main PR points at.
       - name: Build (no push)
         uses: docker/build-push-action@v7
         with:
@@ -64,11 +67,44 @@ jobs:
           run 'source /opt/scripts/functions.sh && LogInfo ok && LogAction ok && require_env HOME'
           run 'dpkg --print-foreign-architectures | grep -qx i386'
 
+      # Dev image: pushes to dev publish the smoke-tested build as :dev and
+      # :dev-<sha> (downstream images can FROM steamcmd-base:dev to test a base
+      # change before it is released). Pull requests stop at the smoke test.
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata (dev)
+        if: github.event_name == 'push'
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=dev
+            type=sha,prefix=dev-,format=short
+
+      - name: Push dev image
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+
   # Real steamcmd round trip against Steam: anonymous login, then install the
   # Steamworks SDK redistributable (app 1007, a few MB) through the shared
   # helper and confirm the manifest reports fully installed. Separate job on
   # purpose: only "build" is a required check, so a Steam CDN outage cannot
-  # block a prod promotion.
+  # block a promotion to main.
   steamcmd-roundtrip:
     needs: [build]
     runs-on: ubuntu-latest
