@@ -23,6 +23,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Lint helpers (shellcheck)
+        run: shellcheck -s bash scripts/functions.sh
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -34,6 +37,64 @@ jobs:
           context: .
           platforms: linux/amd64
           push: false
+          load: true
           provenance: false
+          tags: steamcmd-base:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Contract checks: everything the README promises downstream images.
+      - name: Smoke test image contract
+        run: |
+          set -euo pipefail
+          run() { docker run --rm steamcmd-base:ci bash -euo pipefail -c "$1"; }
+          run 'test "$(id -un):$(id -u):$(id -g)" = "steam:1000:1000"'
+          run 'test "$PWD" = /home/steam'
+          run 'test -x /home/steam/steamcmd/steamcmd.sh'
+          for link in /home/steam/.steam/sdk32/steamclient.so \
+                      /home/steam/.steam/sdk64/steamclient.so \
+                      /usr/lib/x86_64-linux-gnu/steamclient.so \
+                      /home/steam/steamcmd/steamservice.so \
+                      /home/steam/steamcmd/steam.sh \
+                      /home/steam/steamcmd/linux32/steam \
+                      /home/steam/steamcmd/linux64/steam; do
+            run "test -e $link"
+          done
+          run 'command -v gosu curl ps >/dev/null'
+          run 'source /opt/scripts/functions.sh && LogInfo ok && LogAction ok && require_env HOME'
+          run 'dpkg --print-foreign-architectures | grep -qx i386'
+
+  # Real steamcmd round trip against Steam: anonymous login, then install the
+  # Steamworks SDK redistributable (app 1007, a few MB) through the shared
+  # helper and confirm the manifest reports fully installed. Separate job on
+  # purpose: only "build" is a required check, so a Steam CDN outage cannot
+  # block a prod promotion.
+  steamcmd-roundtrip:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build from cache
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          load: true
+          provenance: false
+          tags: steamcmd-base:ci
+          cache-from: type=gha
+
+      - name: Install app 1007 through steamcmd_update
+        run: |
+          docker run --rm -e INSTALL_DIR=/home/steam/app steamcmd-base:ci \
+            bash -euo pipefail -c '
+              source /opt/scripts/functions.sh
+              steamcmd_update 1007
+              steamcmd_installed 1007
+              ls "$INSTALL_DIR"'

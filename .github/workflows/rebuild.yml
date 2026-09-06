@@ -1,7 +1,7 @@
 name: Weekly base rebuild
 
 # Rebuilds and re-pushes the CURRENT latest v* tag + :latest on a schedule, so
-# the image picks up debian:bookworm-slim security patches even with no code
+# the image picks up debian:trixie-slim security patches even with no code
 # changes. Same version number - this does not mint a new release. Dependent
 # game images consume :latest.
 on:
