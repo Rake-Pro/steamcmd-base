@@ -208,7 +208,7 @@ USER steam
 | `latest` | Latest release, re-pushed weekly with fresh Debian security patches (same version number) |
 | `sha-<short>` | Commit the image was built from |
 
-- `main` is the integration branch. A promotion PR to `prod` is opened
+- `dev` is the integration branch (default). A promotion PR to `main` is opened
   automatically. Merging it mints the next patch tag and publishes the image.
 - Label the promotion PR `release:minor` or `release:major` to change the bump.
 - Every published image is Trivy-scanned. Fixable CRITICAL findings fail the
@@ -260,8 +260,8 @@ CI builds the image on every push and PR and checks:
 ```
 Dockerfile                 image definition
 scripts/functions.sh       helpers copied to /opt/scripts/functions.sh
-.github/workflows/ci.yml   build + contract smoke tests on main and PRs
-.github/workflows/sync-prod.yml   opens the main -> prod promotion PR
+.github/workflows/ci.yml   build + contract smoke tests on dev and PRs; pushes :dev / :dev-<sha> on dev
+.github/workflows/sync-main.yml   opens the dev -> main promotion PR
 .github/workflows/release.yml     tags, builds, pushes, Trivy-scans a release
 .github/workflows/rebuild.yml     weekly re-push of the current release with fresh apt patches
 ```

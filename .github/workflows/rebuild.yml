@@ -28,10 +28,10 @@ jobs:
     outputs:
       version: ${{ steps.meta.outputs.version }}
     steps:
-      - name: Checkout prod
+      - name: Checkout main
         uses: actions/checkout@v7
         with:
-          ref: refs/heads/prod
+          ref: refs/heads/main
           fetch-depth: 0
 
       - name: Resolve current latest version tag
@@ -40,7 +40,7 @@ jobs:
           set -euo pipefail
           latest=$(git tag -l 'v*' --sort=-v:refname | head -1)
           if [ -z "${latest}" ]; then
-            echo "No v* tag found on prod; nothing to rebuild." >&2
+            echo "No v* tag found on main; nothing to rebuild." >&2
             exit 1
           fi
           echo "tag=${latest}" >> "$GITHUB_OUTPUT"
