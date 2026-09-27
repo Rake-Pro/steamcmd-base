@@ -9,7 +9,7 @@ ghcr.io/rake-pro/steamcmd-base:1.1          # tracks the latest 1.1.x
 ghcr.io/rake-pro/steamcmd-base:1.1.0        # exact release
 ```
 
-- Built for the rake.pro homelab, usable by anyone: no homelab-specific
+- Built for a homelab, usable by anyone: no homelab-specific
   assumptions are baked in.
 - One place for the steam user, SteamCMD, its runtime symlinks, and a small
   set of bash helpers, so each game image only has to describe the game.
@@ -115,7 +115,7 @@ restarting the pod. The helper clears `$HOME/Steam/appcache`, forces
 
 ## Environment conventions
 
-The base does not enforce these. The helpers and every rake.pro game image use
+The base does not enforce these. The helpers and every game image built on this base use
 them, so following them keeps images interchangeable.
 
 | Variable | Purpose |

@@ -34,7 +34,7 @@ RUN ln -s /home/steam/steamcmd/linux64/steamclient.so /usr/lib/x86_64-linux-gnu/
 
 LABEL org.opencontainers.image.source="https://github.com/Rake-Pro/steamcmd-base" \
       org.opencontainers.image.title="steamcmd-base" \
-      org.opencontainers.image.description="Base image for self-owned steamcmd game server images (rake.pro homelab)"
+      org.opencontainers.image.description="Base image for self-owned steamcmd game server images"
 
 USER steam
 WORKDIR /home/steam
