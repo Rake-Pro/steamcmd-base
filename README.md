@@ -242,6 +242,11 @@ CI builds the image on every push and PR and checks:
   With `LANG=C.UTF-8` there is no locale warning either.
 - `apt-get` in downstream images needs `apt-get update` first: package lists
   are removed from the base to keep it small.
+- Docker Engine 29: under its default seccomp profile SteamCMD fails with
+  `CreateBoundSocket: failed to create socket ... (38)` and `No Connection`.
+  Run the container with `--security-opt seccomp=unconfined` (compose:
+  `security_opt: ["seccomp=unconfined"]`). Docker Engine 28 was not affected;
+  other runtimes' default profiles are untested.
 - Images built `FROM :latest` inherit whatever SteamCMD version the last
   weekly rebuild fetched. SteamCMD also self-updates at runtime on first use
   if Valve shipped a newer client since.
