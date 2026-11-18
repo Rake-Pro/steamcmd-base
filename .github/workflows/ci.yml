@@ -130,6 +130,9 @@ jobs:
           tags: steamcmd-base:ci
           cache-from: type=gha
 
+      # seccomp=unconfined: under Docker Engine 29's default seccomp profile the
+      # 32-bit steamcmd cannot create a socket (CreateBoundSocket error 38, then
+      # "No Connection"). Same image, same runner: fails confined, passes unconfined.
       - name: Install app 1007 through steamcmd_update
         run: |
           docker run --rm --security-opt seccomp=unconfined -e INSTALL_DIR=/home/steam/app steamcmd-base:ci \
